@@ -1,5 +1,6 @@
 import type {Format, GlyphData, InitialOptions} from "../types";
 import {getBuiltInTemplates, getTemplateFilePath} from "../../templates";
+import type { CosmiconfigResult } from "cosmiconfig/dist/types";
 import {Readable} from "stream";
 import type {Result} from "../types/Result";
 import SVGIcons2SVGFontStream from "svgicons2svgfont";
@@ -17,27 +18,15 @@ import ttf2woff from "ttf2woff";
 import wawoff2 from "wawoff2";
 
 const buildConfig = async (options) => {
-  let searchPath = process.cwd();
-  let configPath = null;
+  const configExplorer = cosmiconfig("webfont");
+  const searchPath = process.cwd();
 
   if (options.configFile) {
-    searchPath = null;
-    configPath = path.resolve(process.cwd(), options.configFile);
+    const configPath = path.resolve(searchPath, options.configFile);
+    return await configExplorer.load(configPath) || {} as CosmiconfigResult;
   }
 
-  const configExplorer = cosmiconfig("webfont");
-
-  let config = await configExplorer.search(searchPath);
-
-  if (configPath) {
-    config = await configExplorer.load(configPath);
-  }
-
-  if (!config) {
-    return {} as any;
-  }
-
-  return config;
+  return await configExplorer.search(searchPath) || {} as CosmiconfigResult;
 };
 
 const toSvg = (glyphsData, options) => {
